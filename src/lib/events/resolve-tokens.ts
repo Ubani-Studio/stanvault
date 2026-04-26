@@ -9,7 +9,10 @@ type FanWithLinks = Fan & { platformLinks: FanPlatformLink[] }
 export function resolveTokens(
   template: string,
   fan: FanWithLinks,
-  extra?: { stanClubName?: string }
+  extra?: {
+    stanClubName?: string
+    customVariables?: Record<string, string | number>
+  }
 ): string {
   // Aggregate tip stats across all platform links
   let totalTipCount = 0
@@ -52,6 +55,10 @@ export function resolveTokens(
     '{moment_saves}': String(totalMomentSaves),
     '{stan_club_name}': extra?.stanClubName || 'inner circle',
     '{stan_name}': fan.displayName,
+  }
+
+  for (const [key, value] of Object.entries(extra?.customVariables || {})) {
+    tokens[`{${key}}`] = String(value)
   }
 
   let result = template

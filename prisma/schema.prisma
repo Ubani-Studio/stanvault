@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -45,42 +45,81 @@ model VerificationToken {
 
 // User (Artist)
 model User {
-  id                   String               @id @default(cuid())
-  email                String               @unique
-  emailVerified        DateTime?
-  password             String?
-  name                 String?
-  image                String?
-  artistName           String?
-  genre                String?
-  careerStage          CareerStage?
-  pricingTier          PricingTier          @default(STARTER)
-  location             String?
-  spotifyArtistId      String?              // Artist's Spotify ID for matching listeners
-  spotifyArtistUri     String?              // Spotify URI
-  onboardingCompleted  Boolean              @default(false)
-  onboardingStep       Int                  @default(1)
-  isPublicProfile      Boolean              @default(false)  // Opt-in for public SCR profile
-  betaCohort           BetaCohort?          // Beta segment assignment
-  acquisitionChannel   AcquisitionChannel?  // How they were acquired
-  betaInviteCode       String?              // Invite code used to register
-  betaJoinedAt         DateTime?            // When they joined the beta
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id                  String              @id @default(cuid())
+  email               String              @unique
+  emailVerified       DateTime?
+  password            String?
+  name                String?
+  image               String?
+  artistName          String?
+  genre               String?
+  careerStage         CareerStage?
+  pricingTier         PricingTier         @default(STARTER)
+  location            String?
+  spotifyArtistId     String? // Artist's Spotify ID for matching listeners
+  spotifyArtistUri    String? // Spotify URI
+  onboardingCompleted Boolean             @default(false)
+  onboardingStep      Int                 @default(1)
+  isPublicProfile     Boolean             @default(false) // Opt-in for public SCR profile
+  isManager           Boolean             @default(false) // Roster Intel: this user manages other artists
+  betaCohort          BetaCohort? // Beta segment assignment
+  acquisitionChannel  AcquisitionChannel? // How they were acquired
+  betaInviteCode      String? // Invite code used to register
+  betaJoinedAt        DateTime? // When they joined the beta
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
-  accounts             Account[]
-  sessions             Session[]
-  platformConnections  PlatformConnection[]
-  fans                 Fan[]
-  metricsHistory       ArtistMetricsHistory[]
-  fanUserLinks         FanUserArtistLink[]  // Fan portal users who are fans of this artist
-  drops                Drop[]               // Gated drops created by this artist
-  campaignRuns         CampaignRun[]        // Emissar campaign run history
+  accounts                Account[]
+  sessions                Session[]
+  platformConnections     PlatformConnection[]
+  fans                    Fan[]
+  metricsHistory          ArtistMetricsHistory[]
+  fanUserLinks            FanUserArtistLink[] // Fan portal users who are fans of this artist
+  drops                   Drop[] // Gated drops created by this artist
+  campaignRuns            CampaignRun[] // Emissar campaign run history
   campaignVariablePresets CampaignVariablePreset[] // Saved campaign variable presets
-  savedVoiceModels     SavedVoiceModel[]
-  ctaCompletions       CtaActionCompletion[]
-  apiKeys              ApiKey[]             // B2B API access keys
+  savedVoiceModels        SavedVoiceModel[]
+  ctaCompletions          CtaActionCompletion[]
+  apiKeys                 ApiKey[] // B2B API access keys
   acknowledgmentTemplates AcknowledgmentTemplate[]
+  // Roster Intel — manager view + artists managed by this user
+  managedArtistsAsManager ManagerArtistLink[]      @relation("ManagerLink")
+  managerLinksAsArtist    ManagerArtistLink[]      @relation("ManagedArtistLink")
+}
+
+// Roster Intel: a manager (a User with isManager=true) is granted access to view fan health
+// metrics across multiple managed artists. Status governs whether the manager can currently
+// see the artist's data (artist can revoke at any time).
+model ManagerArtistLink {
+  id         String            @id @default(cuid())
+  managerId  String
+  artistId   String
+  role       ManagerRole       @default(MANAGER)
+  status     ManagerLinkStatus @default(PENDING)
+  invitedAt  DateTime          @default(now())
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  manager User @relation("ManagerLink", fields: [managerId], references: [id], onDelete: Cascade)
+  artist  User @relation("ManagedArtistLink", fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([managerId, artistId])
+  @@index([managerId, status])
+  @@index([artistId, status])
+}
+
+enum ManagerRole {
+  MANAGER // Read fan metrics, send drops on behalf
+  LABEL // Multi-artist label account, broader access
+  ANALYST // Read-only, no drop sending
+}
+
+enum ManagerLinkStatus {
+  PENDING // Invited, awaiting artist acceptance
+  ACTIVE // Accepted, manager has access
+  REVOKED // Artist revoked access
 }
 
 enum CareerStage {
@@ -99,51 +138,51 @@ enum PricingTier {
 
 // Beta cohort segments (artist-side)
 enum BetaCohort {
-  CORE_AFROBEATS        // 30 artists: 5K-80K listeners, Lagos/Nairobi/Joburg/Accra
-  DIASPORA              // 15 artists: London/Atlanta/Toronto/NYC
-  MANAGER               // 10 managers: managing 2-5 artists each
-  DIRECT_TO_FAN_INDIE   // 10 artists: Bandcamp/Ko-fi/Patreon active
-  EXPERIMENTAL_NICHE    // 5 artists: multi-genre, experimental
-  PRODUCER_DJ           // 5 artists: release tracks + DJ
-  INDIE_HIPHOP_RNB      // 5 artists: US indie without African ecosystem
+  CORE_AFROBEATS // 30 artists: 5K-80K listeners, Lagos/Nairobi/Joburg/Accra
+  DIASPORA // 15 artists: London/Atlanta/Toronto/NYC
+  MANAGER // 10 managers: managing 2-5 artists each
+  DIRECT_TO_FAN_INDIE // 10 artists: Bandcamp/Ko-fi/Patreon active
+  EXPERIMENTAL_NICHE // 5 artists: multi-genre, experimental
+  PRODUCER_DJ // 5 artists: release tracks + DJ
+  INDIE_HIPHOP_RNB // 5 artists: US indie without African ecosystem
 }
 
 // Beta cohort segments (fan-side)
 enum FanBetaCohort {
-  DEEP_AFRICAN          // 35 fans: Lagos/Nairobi/Joburg, stream daily, tip on Dasham
-  DIASPORA_SUPERFAN     // 25 fans: London/Atlanta/Toronto/NYC, heavy streamers
+  DEEP_AFRICAN // 35 fans: Lagos/Nairobi/Joburg, stream daily, tip on Dasham
+  DIASPORA_SUPERFAN // 25 fans: London/Atlanta/Toronto/NYC, heavy streamers
   BANDCAMP_KOFI_SUPPORTER // 20 fans: buy albums, subscribe on Ko-fi/Patreon
-  STREET_TEAM_LEADER    // 15 fans: obsessive, share everything
-  CASUAL_CURIOUS        // 15 fans: saw a drop link, browsing
-  COLD_SIGNUP           // 10 fans: no prior artist connection
+  STREET_TEAM_LEADER // 15 fans: obsessive, share everything
+  CASUAL_CURIOUS // 15 fans: saw a drop link, browsing
+  COLD_SIGNUP // 10 fans: no prior artist connection
 }
 
 enum AcquisitionChannel {
-  ORYX_PALMLION         // Internal ecosystem referral
-  MUSIC_TWITTER         // Targeted DMs on X
-  BANDCAMP_OUTREACH     // Direct outreach to Bandcamp sellers
-  MANAGER_NETWORK       // Personal intros
-  DISCORD_COMMUNITY     // Music Discord servers
-  PERSONAL_NETWORK      // Sphinxy's creative circles
-  COLD_SIGNUP           // Organic from pricing page / social
+  ORYX_PALMLION // Internal ecosystem referral
+  MUSIC_TWITTER // Targeted DMs on X
+  BANDCAMP_OUTREACH // Direct outreach to Bandcamp sellers
+  MANAGER_NETWORK // Personal intros
+  DISCORD_COMMUNITY // Music Discord servers
+  PERSONAL_NETWORK // Sphinxy's creative circles
+  COLD_SIGNUP // Organic from pricing page / social
 }
 
 // Platform Connection
 model PlatformConnection {
-  id              String           @id @default(cuid())
-  userId          String
-  platform        Platform
-  accessToken     String?
-  refreshToken    String?
-  tokenExpiresAt  DateTime?        // When access token expires
-  platformUserId  String?          // User's ID on the platform
-  platformScope   String?          // Granted OAuth scopes
-  status          ConnectionStatus @default(CONNECTED)
-  lastSyncAt      DateTime?
-  fanCount        Int              @default(0)
-  syncError       String?          // Last sync error message
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  userId         String
+  platform       Platform
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime? // When access token expires
+  platformUserId String? // User's ID on the platform
+  platformScope  String? // Granted OAuth scopes
+  status         ConnectionStatus @default(CONNECTED)
+  lastSyncAt     DateTime?
+  fanCount       Int              @default(0)
+  syncError      String? // Last sync error message
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -177,7 +216,7 @@ enum ConnectionStatus {
 
 // Fan
 model Fan {
-  id              String           @id @default(cuid())
+  id              String   @id @default(cuid())
   userId          String
   displayName     String
   email           String?
@@ -185,27 +224,28 @@ model Fan {
   location        String?
   city            String?
   country         String?
-  stanScore       Int              @default(0)
-  tier            FanTier          @default(CASUAL)
-  convictionScore Int              @default(0)
-  platformScore   Int              @default(0)
-  engagementScore Int              @default(0)
-  longevityScore  Int              @default(0)
-  recencyScore    Int              @default(0)
-  firstSeenAt     DateTime         @default(now())
-  lastActiveAt    DateTime         @default(now())
+  stanScore       Int      @default(0)
+  tier            FanTier  @default(CASUAL)
+  convictionScore Int      @default(0)
+  platformScore   Int      @default(0)
+  engagementScore Int      @default(0)
+  longevityScore  Int      @default(0)
+  recencyScore    Int      @default(0)
+  firstSeenAt     DateTime @default(now())
+  lastActiveAt    DateTime @default(now())
   notes           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   platformLinks   FanPlatformLink[]
   events          FanEvent[]
   snapshots       FanSnapshot[]
   listeningEvents ListeningEvent[]
-  fanUserLink     FanUserArtistLink?  // Link to fan portal user if claimed
+  fanUserLink     FanUserArtistLink? // Link to fan portal user if claimed
   proofs          FanProof[]
   acknowledgments Acknowledgment[]
+  contactPoints   FanContactPoint[]
 
   @@index([userId, stanScore])
   @@index([userId, tier])
@@ -218,6 +258,44 @@ enum FanTier {
   ENGAGED
   DEDICATED
   SUPERFAN
+  ELITE // Top 1% by Resonance. Folded from Convicta (£500+/year-equivalent monetary anchor, plus sustained multi-month engagement). Confers gating + premium access in Imperium and Roster Intel.
+}
+
+enum ContactChannel {
+  EMAIL
+  SMS
+}
+
+enum ContactConsentStatus {
+  UNKNOWN
+  PENDING
+  SUBSCRIBED
+  UNSUBSCRIBED
+}
+
+model FanContactPoint {
+  id                 String               @id @default(cuid())
+  fanId              String
+  channel            ContactChannel
+  value              String
+  normalizedValue    String
+  label              String?
+  isPrimary          Boolean              @default(false)
+  consentStatus      ContactConsentStatus @default(UNKNOWN)
+  consentSource      String?
+  consentCapturedAt  DateTime?
+  consentRevokedAt   DateTime?
+  verifiedAt         DateTime?
+  lastDeliveryAt     DateTime?
+  lastDeliveryStatus String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  fan Fan @relation(fields: [fanId], references: [id], onDelete: Cascade)
+
+  @@unique([fanId, channel, normalizedValue])
+  @@index([fanId, channel, isPrimary])
+  @@index([channel, normalizedValue])
 }
 
 // Fan Platform Link - platform-specific metrics
@@ -228,41 +306,41 @@ model FanPlatformLink {
   platformFanId String?
 
   // Spotify metrics
-  streams       Int?
-  playlistAdds  Int?
-  saves         Int?
+  streams      Int?
+  playlistAdds Int?
+  saves        Int?
 
   // Social metrics (Instagram, TikTok, Twitter)
-  follows       Boolean?
-  likes         Int?
-  comments      Int?
-  shares        Int?
+  follows  Boolean?
+  likes    Int?
+  comments Int?
+  shares   Int?
 
   // YouTube metrics
-  subscribed    Boolean?
-  videoViews    Int?
-  watchTime     Int?
+  subscribed Boolean?
+  videoViews Int?
+  watchTime  Int?
 
   // Email metrics
-  emailOpens    Int?
-  emailClicks   Int?
+  emailOpens  Int?
+  emailClicks Int?
 
   // Dasham conviction metrics (tip = highest signal)
-  tipCount      Int?       // Total tips sent
-  tipAmountUsd  Float?     // Total tip amount in USD (normalized)
-  tipFrequency  Int?       // Unique months with tips
-  momentSaves   Int?       // Moments saved/engaged with
-  cityAffiliation String?  // Primary city (LAGOS, JOBURG, NAIROBI)
+  tipCount        Int? // Total tips sent
+  tipAmountUsd    Float? // Total tip amount in USD (normalized)
+  tipFrequency    Int? // Unique months with tips
+  momentSaves     Int? // Moments saved/engaged with
+  cityAffiliation String? // Primary city (LAGOS, JOBURG, NAIROBI)
 
   // Generic conviction signals (purchases, subscriptions)
-  purchaseCount     Int?       // Total purchases made (Bandcamp, merch, Ko-fi, etc.)
-  purchaseAmountUsd Float?     // Total purchase amount in USD
-  subscriptionMonths Int?      // Months of active subscription (Ko-fi, Patreon)
+  purchaseCount      Int? // Total purchases made (Bandcamp, merch, Ko-fi, etc.)
+  purchaseAmountUsd  Float? // Total purchase amount in USD
+  subscriptionMonths Int? // Months of active subscription (Ko-fi, Patreon)
 
-  firstSeenAt   DateTime @default(now())
-  lastActiveAt  DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  firstSeenAt  DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   fan Fan @relation(fields: [fanId], references: [id], onDelete: Cascade)
 
@@ -280,8 +358,8 @@ model FanEvent {
   occurredAt  DateTime  @default(now())
   createdAt   DateTime  @default(now())
 
-  fan             Fan              @relation(fields: [fanId], references: [id], onDelete: Cascade)
-  acknowledgment  Acknowledgment?
+  fan            Fan             @relation(fields: [fanId], references: [id], onDelete: Cascade)
+  acknowledgment Acknowledgment?
 
   @@index([fanId, occurredAt])
 }
@@ -320,7 +398,7 @@ model FanSnapshot {
   date      DateTime
   stanScore Int
   tier      FanTier
-  isActive  Boolean  @default(true)  // Was fan active when snapshot taken?
+  isActive  Boolean  @default(true) // Was fan active when snapshot taken?
   createdAt DateTime @default(now())
 
   fan Fan @relation(fields: [fanId], references: [id], onDelete: Cascade)
@@ -332,20 +410,20 @@ model FanSnapshot {
 
 // Acknowledgment - Auto-acknowledge fan milestones
 model Acknowledgment {
-  id              String              @id @default(cuid())
+  id              String               @id @default(cuid())
   fanId           String
-  fanEventId      String              @unique // One ack per event
+  fanEventId      String               @unique // One ack per event
   eventType       EventType
   status          AcknowledgmentStatus @default(PENDING)
-  deliveryMethod  String              @default("email") // email, sms, etc.
-  messageRendered String?             // Final rendered message
-  subjectRendered String?             // Final rendered subject
+  deliveryMethod  String               @default("email") // email, sms, etc.
+  messageRendered String? // Final rendered message
+  subjectRendered String? // Final rendered subject
   sentAt          DateTime?
   failedAt        DateTime?
   failureReason   String?
-  retryCount      Int                 @default(0)
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  retryCount      Int                  @default(0)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   fan      Fan      @relation(fields: [fanId], references: [id], onDelete: Cascade)
   fanEvent FanEvent @relation(fields: [fanEventId], references: [id], onDelete: Cascade)
@@ -357,15 +435,15 @@ model Acknowledgment {
 
 // AcknowledgmentTemplate - Artist-configurable per event type
 model AcknowledgmentTemplate {
-  id            String    @id @default(cuid())
-  userId        String
-  eventType     EventType
-  enabled       Boolean   @default(true)
-  subject       String
-  messageBody   String    // Supports {fan_name}, {fan_tier}, etc.
-  deliveryMode  String    @default("email")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  userId       String
+  eventType    EventType
+  enabled      Boolean   @default(true)
+  subject      String
+  messageBody  String // Supports {fan_name}, {fan_tier}, etc.
+  deliveryMode String    @default("email")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -375,34 +453,34 @@ model AcknowledgmentTemplate {
 
 // Artist Metrics History - SCR and other metrics over time
 model ArtistMetricsHistory {
-  id                    String   @id @default(cuid())
-  userId                String
-  date                  DateTime
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime
 
   // Fan counts
-  totalFans             Int
-  casualCount           Int
-  engagedCount          Int
-  dedicatedCount        Int
-  superfanCount         Int
+  totalFans      Int
+  casualCount    Int
+  engagedCount   Int
+  dedicatedCount Int
+  superfanCount  Int
 
   // SCR Components
-  holdRate90Day         Float?   // % retained after 90 days
-  holdRate30Day         Float?   // % retained after 30 days
-  depthVelocity         Float?   // Normalized time to superfan (0-1)
-  platformIndependence  Float?   // 1 - HHI (0-1)
-  churnRate             Float?   // % regressed or dormant
+  holdRate90Day        Float? // % retained after 90 days
+  holdRate30Day        Float? // % retained after 30 days
+  depthVelocity        Float? // Normalized time to superfan (0-1)
+  platformIndependence Float? // 1 - HHI (0-1)
+  churnRate            Float? // % regressed or dormant
 
   // Calculated SCR
-  scr                   Float?   // Stan Conversion Rate
+  scr Float? // Stan Conversion Rate
 
   // Additional metrics
-  avgStanScore          Float?
-  newFansCount          Int?     // New fans this period
-  churnedFansCount      Int?     // Fans lost this period
-  upgradedFansCount     Int?     // Fans who upgraded tier
+  avgStanScore      Float?
+  newFansCount      Int? // New fans this period
+  churnedFansCount  Int? // Fans lost this period
+  upgradedFansCount Int? // Fans who upgraded tier
 
-  createdAt             DateTime @default(now())
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -412,19 +490,19 @@ model ArtistMetricsHistory {
 
 // Listening Event - Detailed streaming history from Spotify
 model ListeningEvent {
-  id           String   @id @default(cuid())
-  fanId        String
-  trackId      String   // Spotify track ID
-  trackName    String
-  artistId     String   // Artist's Spotify ID
-  artistName   String
-  albumId      String?
-  albumName    String?
-  playedAt     DateTime
-  durationMs   Int      // How long they listened
-  contextType  String?  // album, playlist, artist, etc.
-  contextUri   String?  // URI of the context
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  fanId       String
+  trackId     String // Spotify track ID
+  trackName   String
+  artistId    String // Artist's Spotify ID
+  artistName  String
+  albumId     String?
+  albumName   String?
+  playedAt    DateTime
+  durationMs  Int // How long they listened
+  contextType String? // album, playlist, artist, etc.
+  contextUri  String? // URI of the context
+  createdAt   DateTime @default(now())
 
   fan Fan @relation(fields: [fanId], references: [id], onDelete: Cascade)
 
@@ -435,23 +513,23 @@ model ListeningEvent {
 
 // Fan Verification Token - For the verification protocol (artist-issued)
 model FanVerificationToken {
-  id              String    @id @default(cuid())
-  fanId           String
-  artistId        String    // The artist this verification is for
-  token           String    @unique
-  tier            FanTier
-  stanScore       Int
+  id                 String    @id @default(cuid())
+  fanId              String
+  artistId           String // The artist this verification is for
+  token              String    @unique
+  tier               FanTier
+  stanScore          Int
   relationshipMonths Int
-  issuedAt        DateTime  @default(now())
-  expiresAt       DateTime
-  revokedAt       DateTime?
-  usageCount      Int       @default(0)
-  lastUsedAt      DateTime?
+  issuedAt           DateTime  @default(now())
+  expiresAt          DateTime
+  revokedAt          DateTime?
+  usageCount         Int       @default(0)
+  lastUsedAt         DateTime?
 
   // Metadata
-  issuedFor       String?   // Purpose/recipient of the token
+  issuedFor String? // Purpose/recipient of the token
 
-  createdAt       DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([fanId])
   @@index([token])
@@ -464,11 +542,11 @@ model FanVerificationToken {
 
 // FanUser - A fan with their own account (the other side of the marketplace)
 model FanUser {
-  id                    String    @id @default(cuid())
-  email                 String    @unique
-  password              String?
-  displayName           String
-  avatarUrl             String?
+  id          String  @id @default(cuid())
+  email       String  @unique
+  password    String?
+  displayName String
+  avatarUrl   String?
 
   // Legacy Spotify fields retained while fan-side auth migrates to FanPlatformConnection.
   spotifyUserId         String?   @unique
@@ -477,27 +555,27 @@ model FanUser {
   spotifyTokenExpiresAt DateTime?
 
   // Profile data
-  country               String?
+  country String?
 
   // Onboarding
-  onboardingCompleted   Boolean   @default(false)
-  onboardingStep        Int       @default(1)
+  onboardingCompleted Boolean @default(false)
+  onboardingStep      Int     @default(1)
 
   // Beta tracking
-  betaCohort            FanBetaCohort?       // Beta segment assignment
-  acquisitionChannel    AcquisitionChannel?  // How they were acquired
-  betaInviteCode        String?              // Invite code used to register
-  betaJoinedAt          DateTime?            // When they joined the beta
+  betaCohort         FanBetaCohort? // Beta segment assignment
+  acquisitionChannel AcquisitionChannel? // How they were acquired
+  betaInviteCode     String? // Invite code used to register
+  betaJoinedAt       DateTime? // When they joined the beta
 
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  platformConnections   FanPlatformConnection[]
-  artistRelationships   FanUserArtistLink[]
-  verificationTokens    FanUserVerificationToken[]
-  sessions              FanUserSession[]
-  dropClaims            DropClaim[]
+  platformConnections FanPlatformConnection[]
+  artistRelationships FanUserArtistLink[]
+  verificationTokens  FanUserVerificationToken[]
+  sessions            FanUserSession[]
+  dropClaims          DropClaim[]
 
   @@index([email])
   @@index([spotifyUserId])
@@ -516,19 +594,19 @@ model FanUserSession {
 }
 
 model FanPlatformConnection {
-  id              String           @id @default(cuid())
-  fanUserId       String
-  platform        Platform
-  accessToken     String?
-  refreshToken    String?
-  tokenExpiresAt  DateTime?
-  platformUserId  String?
-  platformScope   String?
-  status          ConnectionStatus @default(CONNECTED)
-  lastSyncAt      DateTime?
-  syncError       String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  fanUserId      String
+  platform       Platform
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  platformUserId String?
+  platformScope  String?
+  status         ConnectionStatus @default(CONNECTED)
+  lastSyncAt     DateTime?
+  syncError      String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   fanUser FanUser @relation(fields: [fanUserId], references: [id], onDelete: Cascade)
 
@@ -540,33 +618,33 @@ model FanPlatformConnection {
 // FanUserArtistLink - The relationship between a fan and an artist
 // This is the core of the two-sided marketplace
 model FanUserArtistLink {
-  id            String    @id @default(cuid())
-  fanUserId     String
-  artistId      String    // User.id (the artist)
-  fanRecordId   String?   @unique  // Link to existing Fan record if matched
+  id          String  @id @default(cuid())
+  fanUserId   String
+  artistId    String // User.id (the artist)
+  fanRecordId String? @unique // Link to existing Fan record if matched
 
   // Cached relationship data (computed from listening history)
-  tier          FanTier   @default(CASUAL)
-  stanScore     Int       @default(0)
-  totalStreams  Int       @default(0)
-  savedTracks   Int       @default(0)
-  playlistAdds  Int       @default(0)
-  isFollowing   Boolean   @default(false)
+  tier         FanTier @default(CASUAL)
+  stanScore    Int     @default(0)
+  totalStreams Int     @default(0)
+  savedTracks  Int     @default(0)
+  playlistAdds Int     @default(0)
+  isFollowing  Boolean @default(false)
 
-  firstSeenAt   DateTime  @default(now())
-  lastActiveAt  DateTime  @default(now())
+  firstSeenAt  DateTime @default(now())
+  lastActiveAt DateTime @default(now())
 
   // Verification status
-  verified      Boolean   @default(false)  // Has this relationship been verified via Spotify?
-  verifiedAt    DateTime?
-  verifiedVia   String?   // "spotify", "manual", etc.
+  verified    Boolean   @default(false) // Has this relationship been verified via Spotify?
+  verifiedAt  DateTime?
+  verifiedVia String? // "spotify", "manual", etc.
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  fanUser       FanUser   @relation(fields: [fanUserId], references: [id], onDelete: Cascade)
-  artist        User      @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  fanRecord     Fan?      @relation(fields: [fanRecordId], references: [id])
+  fanUser   FanUser @relation(fields: [fanUserId], references: [id], onDelete: Cascade)
+  artist    User    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  fanRecord Fan?    @relation(fields: [fanRecordId], references: [id])
 
   @@unique([fanUserId, artistId])
   @@index([fanUserId])
@@ -577,10 +655,10 @@ model FanUserArtistLink {
 // FanUserVerificationToken - Fan-initiated verification tokens
 // Different from FanVerificationToken (artist-issued) - this is self-service
 model FanUserVerificationToken {
-  id                 String    @id @default(cuid())
-  fanUserId          String
-  artistId           String    // Which artist relationship this proves
-  token              String    @unique
+  id        String @id @default(cuid())
+  fanUserId String
+  artistId  String // Which artist relationship this proves
+  token     String @unique
 
   // Snapshot of status at time of issuance
   tier               FanTier
@@ -588,18 +666,18 @@ model FanUserVerificationToken {
   relationshipMonths Int
 
   // Token lifecycle
-  issuedAt           DateTime  @default(now())
-  expiresAt          DateTime
-  revokedAt          DateTime?
+  issuedAt  DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
 
   // Usage tracking
-  usageCount         Int       @default(0)
-  lastUsedAt         DateTime?
+  usageCount Int       @default(0)
+  lastUsedAt DateTime?
 
   // What the fan is using it for (optional)
-  purpose            String?
+  purpose String?
 
-  createdAt          DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   fanUser FanUser @relation(fields: [fanUserId], references: [id], onDelete: Cascade)
 
@@ -611,15 +689,15 @@ model FanUserVerificationToken {
 
 // FanIdentityExport - Track when fans export their portable identity
 model FanIdentityExport {
-  id          String   @id @default(cuid())
-  fanUserId   String
-  format      String   // "json", "signed_json"
-  signature   String?  // Cryptographic signature for authenticity
-  exportedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  fanUserId  String
+  format     String // "json", "signed_json"
+  signature  String? // Cryptographic signature for authenticity
+  exportedAt DateTime @default(now())
 
   // Snapshot of what was exported
   artistCount Int
-  totalScore  Int      // Sum of all stan scores
+  totalScore  Int // Sum of all stan scores
 
   @@index([fanUserId])
 }
@@ -632,6 +710,7 @@ model CampaignRun {
   status             String
   dispatchMode       String?
   provider           String?
+  deliveryChannel    String?
   subject            String?
   messageTemplate    String
   minTier            FanTier?
@@ -639,20 +718,21 @@ model CampaignRun {
   recipientLimit     Int?
   dryRun             Boolean  @default(true)
 
-  segmentCount       Int      @default(0)
-  queuedRecipients   Int      @default(0)
-  skippedNoEmail     Int      @default(0)
-  sentCount          Int      @default(0)
-  failedCount        Int      @default(0)
-  previewOnlyCount   Int      @default(0)
-  voiceSentCount     Int      @default(0)
+  segmentCount     Int @default(0)
+  queuedRecipients Int @default(0)
+  skippedNoEmail   Int @default(0)
+  skippedNoChannel Int @default(0)
+  sentCount        Int @default(0)
+  failedCount      Int @default(0)
+  previewOnlyCount Int @default(0)
+  voiceSentCount   Int @default(0)
 
-  requestPayload     Json?
-  responsePayload    Json?
-  errorMessage       String?
-  createdAt          DateTime @default(now())
+  requestPayload  Json?
+  responsePayload Json?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   ctaCompletions CtaActionCompletion[]
 
   @@index([userId, createdAt])
@@ -660,26 +740,26 @@ model CampaignRun {
 
 // SavedVoiceModel - Artist-linked Emissar voice models for quick campaign selection
 model SavedVoiceModel {
-  id           String   @id @default(cuid())
-  userId       String
-  externalId   String
-  provider     String
-  name         String
-  previewUrl   String?
-  isActive     Boolean  @default(false)
-  source       String?  // "stanvault_clone", "manual_import"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  externalId String
+  provider   String
+  name       String
+  previewUrl String?
+  isActive   Boolean  @default(false)
+  source     String? // "stanvault_clone", "manual_import"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, isActive])
   @@unique([userId, externalId])
+  @@index([userId, isActive])
 }
 
 // CtaActionCompletion - Proof-first completion artifacts for post-vanity CTA execution
 model CtaActionCompletion {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   userId        String
   fanId         String?
   fanEmail      String?
@@ -688,11 +768,11 @@ model CtaActionCompletion {
   ctaLabel      String
   proofUrl      String?
   proofNote     String?
-  status        String   @default("submitted") // submitted, verified, rejected
-  submittedAt   DateTime @default(now())
+  status        String    @default("submitted") // submitted, verified, rejected
+  submittedAt   DateTime  @default(now())
   reviewedAt    DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaignRun CampaignRun? @relation(fields: [campaignRunId], references: [id], onDelete: SetNull)
 
   @@index([userId, submittedAt])
@@ -722,36 +802,36 @@ model CampaignVariablePreset {
 
 // Drop - Exclusive content gated behind fan verification
 model Drop {
-  id          String    @id @default(cuid())
-  userId      String    // Artist who created it
-  slug        String    @unique // URL-friendly identifier
+  id     String @id @default(cuid())
+  userId String // Artist who created it
+  slug   String @unique // URL-friendly identifier
 
   // Content
   title       String
   description String?
   contentType DropContentType
-  contentUrl  String?   // File URL, media URL, etc.
+  contentUrl  String? // File URL, media URL, etc.
 
   // Gating rules
-  minTier     FanTier?  // Require at least this tier (NULL = any verified fan)
-  minScore    Int?      // Require minimum stan score
-  minMonths   Int?      // Require minimum relationship duration
+  minTier   FanTier? // Require at least this tier (NULL = any verified fan)
+  minScore  Int? // Require minimum stan score
+  minMonths Int? // Require minimum relationship duration
 
   // Time windows
-  startsAt    DateTime? // When drop becomes accessible
-  endsAt      DateTime? // When drop expires
+  startsAt DateTime? // When drop becomes accessible
+  endsAt   DateTime? // When drop expires
 
   // Inventory
-  maxClaims   Int?      // NULL = unlimited
+  maxClaims Int? // NULL = unlimited
 
   // Status
-  isActive    Boolean   @default(true)
+  isActive Boolean @default(true)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  claims      DropClaim[]
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  claims DropClaim[]
 
   @@index([userId])
   @@index([slug])
@@ -759,15 +839,15 @@ model Drop {
 }
 
 enum DropContentType {
-  DOWNLOAD    // File download (MP3, ZIP, etc.)
-  LINK        // External link
-  MESSAGE     // Text/markdown content
-  PRESALE     // Ticket presale code
+  DOWNLOAD // File download (MP3, ZIP, etc.)
+  LINK // External link
+  MESSAGE // Text/markdown content
+  PRESALE // Ticket presale code
 }
 
 // DropClaim - Record of a fan claiming a drop
 model DropClaim {
-  id        String   @id @default(cuid())
+  id        String @id @default(cuid())
   dropId    String
   fanUserId String
 
@@ -777,8 +857,8 @@ model DropClaim {
 
   claimedAt DateTime @default(now())
 
-  drop      Drop     @relation(fields: [dropId], references: [id], onDelete: Cascade)
-  fanUser   FanUser  @relation(fields: [fanUserId], references: [id], onDelete: Cascade)
+  drop    Drop    @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  fanUser FanUser @relation(fields: [fanUserId], references: [id], onDelete: Cascade)
 
   @@unique([dropId, fanUserId]) // One claim per fan per drop
   @@index([dropId])
@@ -791,27 +871,27 @@ model DropClaim {
 
 // BetaInvite - Invite codes for gated beta access
 model BetaInvite {
-  id                String              @id @default(cuid())
-  code              String              @unique // e.g., "SV-AFRO-001", "SV-DIASPORA-042"
-  description       String?             // Human-readable note about this invite
+  id          String  @id @default(cuid())
+  code        String  @unique // e.g., "SV-AFRO-001", "SV-DIASPORA-042"
+  description String? // Human-readable note about this invite
 
   // Targeting
-  artistCohort      BetaCohort?         // For artist invites
-  fanCohort         FanBetaCohort?      // For fan invites
-  targetTier        PricingTier?        // Tier to assign on registration (artists only)
-  channel           AcquisitionChannel  // Which acquisition channel
+  artistCohort BetaCohort? // For artist invites
+  fanCohort    FanBetaCohort? // For fan invites
+  targetTier   PricingTier? // Tier to assign on registration (artists only)
+  channel      AcquisitionChannel // Which acquisition channel
 
   // Usage limits
-  maxUses           Int                 @default(1) // How many times this code can be used
-  usedCount         Int                 @default(0) // Current usage
-  expiresAt         DateTime?           // Optional expiration
+  maxUses   Int       @default(1) // How many times this code can be used
+  usedCount Int       @default(0) // Current usage
+  expiresAt DateTime? // Optional expiration
 
   // Beta wave (phased rollout)
-  wave              Int                 @default(1) // 1 = weeks 1-2, 2 = weeks 3-4, 3 = weeks 5-6
+  wave Int @default(1) // 1 = weeks 1-2, 2 = weeks 3-4, 3 = weeks 5-6
 
   // Lifecycle
-  isActive          Boolean             @default(true)
-  createdAt         DateTime            @default(now())
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 
   @@index([code])
   @@index([wave, isActive])
@@ -825,18 +905,18 @@ model BetaInvite {
 
 // FanProof - Self-reported proof of fandom (concert tickets, merch receipts, etc.)
 model FanProof {
-  id                  String    @id @default(cuid())
-  fanId               String
-  proofType           ProofType
-  proofUrl            String?   // URL to image/screenshot
-  description         String?   // Fan-provided context
-  verifiedByCreator   Boolean   @default(false)
-  rejectedByCreator   Boolean   @default(false)
-  convictionPoints    Int       @default(0) // Bonus points awarded (max 15 total across all proofs)
-  reviewedAt          DateTime?
-  reviewNote          String?   // Creator's note on review
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  fanId             String
+  proofType         ProofType
+  proofUrl          String? // URL to image/screenshot
+  description       String? // Fan-provided context
+  verifiedByCreator Boolean   @default(false)
+  rejectedByCreator Boolean   @default(false)
+  convictionPoints  Int       @default(0) // Bonus points awarded (max 15 total across all proofs)
+  reviewedAt        DateTime?
+  reviewNote        String? // Creator's note on review
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   fan Fan @relation(fields: [fanId], references: [id], onDelete: Cascade)
 
@@ -868,7 +948,7 @@ model ApiKey {
   id         String    @id @default(cuid())
   userId     String
   key        String    @unique
-  name       String    // Human-readable label
+  name       String // Human-readable label
   lastUsedAt DateTime?
   revokedAt  DateTime?
   createdAt  DateTime  @default(now())

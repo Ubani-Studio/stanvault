@@ -178,7 +178,8 @@ export function EmailImportDropzone({ onImportComplete, className }: EmailImport
 
       <p className="text-sm text-gray-500 mb-4">
         Upload a CSV export from Mailchimp, ConvertKit, Klaviyo, or other email providers.
-        We'll automatically detect the format and import your subscribers.
+        We&apos;ll detect the format and import subscribers. Optional `phone`, `sms_opt_in`, and
+        `sms_opt_in_at` columns will seed SMS-ready contacts too.
       </p>
 
       {/* Dropzone */}

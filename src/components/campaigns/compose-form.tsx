@@ -6,7 +6,14 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Disclosure } from '@/components/ui/disclosure'
-import { moodPresets, tokenGroups, messageTemplateSuggestions, formatTierLabel, type CampaignEntitlements } from './campaign-constants'
+import {
+  moodPresets,
+  tokenGroups,
+  messageTemplateSuggestions,
+  formatTierLabel,
+  type CampaignAudienceSummary,
+  type CampaignEntitlements,
+} from './campaign-constants'
 
 export interface ComposeFormRef {
   getMessageTemplateRef: () => HTMLTextAreaElement | null
@@ -23,7 +30,10 @@ interface ComposeFormProps {
   onMoodChange: (v: string) => void
   deliveryMode: 'TEXT' | 'VOICE'
   onDeliveryModeChange: (v: 'TEXT' | 'VOICE') => void
+  textChannel: 'EMAIL' | 'SMS'
+  onTextChannelChange: (v: 'EMAIL' | 'SMS') => void
   entitlements: CampaignEntitlements | null
+  audienceSummary: CampaignAudienceSummary | null
 
   // Targeting
   fromEmail: string
@@ -62,7 +72,10 @@ export const ComposeForm = forwardRef<ComposeFormRef, ComposeFormProps>(function
     onMoodChange,
     deliveryMode,
     onDeliveryModeChange,
+    textChannel,
+    onTextChannelChange,
     entitlements,
+    audienceSummary,
     fromEmail,
     onFromEmailChange,
     replyTo,
@@ -250,6 +263,39 @@ export const ComposeForm = forwardRef<ComposeFormRef, ComposeFormProps>(function
           {entitlements && !entitlements.allowVoiceCampaigns && (
             <p className="text-caption text-gray-700">Requires tier upgrade</p>
           )}
+          {deliveryMode === 'TEXT' && (
+            <div className="space-y-2">
+              <div className="inline-flex border border-[#1a1a1a]">
+                <button
+                  type="button"
+                  onClick={() => onTextChannelChange('EMAIL')}
+                  className={`px-3 py-1.5 text-caption transition-colors ${
+                    textChannel === 'EMAIL'
+                      ? 'text-white bg-[#141414]'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onTextChannelChange('SMS')}
+                  className={`px-3 py-1.5 text-caption border-l border-[#1a1a1a] transition-colors ${
+                    textChannel === 'SMS'
+                      ? 'text-white bg-[#141414]'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  SMS
+                </button>
+              </div>
+              <p className="text-caption text-gray-600">
+                {textChannel === 'SMS'
+                  ? 'SMS sends from Imprint via Twilio and only targets opted-in phone numbers.'
+                  : 'Email uses the existing Emissar campaign flow.'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -265,6 +311,41 @@ export const ComposeForm = forwardRef<ComposeFormRef, ComposeFormProps>(function
       <Disclosure label="Personalize">{variablesSlot}</Disclosure>
 
       <Disclosure label="Audience">
+        {audienceSummary && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div className="border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
+              <p className="text-caption text-gray-600">Matched</p>
+              <p className="text-lg text-white">{audienceSummary.matchingFans}</p>
+            </div>
+            <div className="border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
+              <p className="text-caption text-gray-600">Selected</p>
+              <p className="text-lg text-white">{audienceSummary.selectedFans}</p>
+            </div>
+            <div className="border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
+              <p className="text-caption text-gray-600">Email Ready</p>
+              <p className="text-lg text-white">{audienceSummary.emailEligibleFans}</p>
+            </div>
+            <div className="border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
+              <p className="text-caption text-gray-600">SMS Ready</p>
+              <p className="text-lg text-white">{audienceSummary.smsEligibleFans}</p>
+            </div>
+          </div>
+        )}
+
+        {audienceSummary && textChannel === 'SMS' && (
+          <div className="mb-4 text-caption text-gray-600 space-y-1">
+            <p>
+              {audienceSummary.smsKnownFans} fans have phone numbers.{' '}
+              {audienceSummary.smsPendingFans} are still pending consent.
+            </p>
+            {!audienceSummary.smsConfigured && (
+              <p className="text-status-error">
+                Twilio is not configured yet, so SMS live sends will be blocked.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Input
             label="From Email"
@@ -272,11 +353,13 @@ export const ComposeForm = forwardRef<ComposeFormRef, ComposeFormProps>(function
             onChange={(e) => onFromEmailChange(e.target.value)}
             variant="boxed"
             placeholder="Artist <campaigns@yourdomain.com>"
-            disabled={entitlements ? !entitlements.allowCustomFromEmail : false}
+            disabled={textChannel === 'SMS' || (entitlements ? !entitlements.allowCustomFromEmail : false)}
             hint={
-              entitlements && !entitlements.allowCustomFromEmail
-                ? 'Upgrade to Patron Growth or Sovereign.'
-                : undefined
+              textChannel === 'SMS'
+                ? 'Not used for SMS campaigns.'
+                : entitlements && !entitlements.allowCustomFromEmail
+                  ? 'Upgrade to Patron Growth or Sovereign.'
+                  : undefined
             }
           />
           <Input
@@ -285,6 +368,8 @@ export const ComposeForm = forwardRef<ComposeFormRef, ComposeFormProps>(function
             onChange={(e) => onReplyToChange(e.target.value)}
             variant="boxed"
             placeholder="team@yourdomain.com"
+            disabled={textChannel === 'SMS'}
+            hint={textChannel === 'SMS' ? 'Not used for SMS campaigns.' : undefined}
           />
           <Input
             label="Min Pulse Score"
@@ -333,7 +418,15 @@ export const ComposeForm = forwardRef<ComposeFormRef, ComposeFormProps>(function
           variant="outline"
           size="sm"
           onClick={onSubmit}
-          disabled={loading || !messageTemplate.trim()}
+          disabled={
+            loading ||
+            !messageTemplate.trim() ||
+            (!dryRun &&
+              deliveryMode === 'TEXT' &&
+              textChannel === 'SMS' &&
+              audienceSummary !== null &&
+              (!audienceSummary.smsConfigured || audienceSummary.smsEligibleFans === 0))
+          }
         >
           {loading ? (
             <>

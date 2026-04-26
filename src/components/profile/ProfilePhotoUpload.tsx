@@ -82,7 +82,7 @@ export default function ProfilePhotoUpload({
       <div className="relative group">
         {/* Photo Display */}
         <div
-          className={`${sizeClasses[size]} rounded-full overflow-hidden bg-black border border-[#1a1a1a] flex items-center justify-center`}
+          className={`${sizeClasses[size]} rounded-full overflow-hidden bg-[#111] flex items-center justify-center`}
         >
           {isUploading ? (
             <Loader2 className="w-8 h-8 text-accent animate-spin" />

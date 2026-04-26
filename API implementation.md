@@ -87,6 +87,12 @@ APPLE_MUSIC_FAN_REDIRECT_URI="http://localhost:3003/api/fan/auth/apple-music/cal
 
 ORYX_API_URL="http://localhost:4000"
 ECOSYSTEM_API_SECRET=""
+
+TWILIO_ACCOUNT_SID=""
+TWILIO_AUTH_TOKEN=""
+TWILIO_MESSAGING_SERVICE_SID=""
+TWILIO_FROM_NUMBER=""
+TWILIO_STATUS_CALLBACK_URL="http://localhost:3003/api/webhooks/twilio/sms"
 ```
 
 ## Data Model Direction
@@ -145,6 +151,7 @@ This replaces future provider-specific token columns on `FanUser`.
 - These belong to campaign delivery, not audience analytics.
 - WhatsApp and SMS matter more than another DSP connector in phone-first markets.
 - Build them as reach channels on top of Imprint consent and segmentation.
+- Status in repo: SMS fan contacts, audience summaries, live Twilio delivery, and STOP/START webhook handling are now implemented. WhatsApp is still pending.
 
 ### Twitch
 

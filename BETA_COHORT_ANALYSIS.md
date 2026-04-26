@@ -127,7 +127,7 @@ This 40/60 split reflects reality — fans outnumber artists, and artists bring 
 - This is the seed of the cross-artist fan graph moat.
 
 **Signal 6: Dasham conviction data creates the scoring advantage.**
-- Artists with Dasham-tipping fans get accurate Stan Scores (conviction component = 20-35 pts)
+- Artists with Dasham-tipping fans get accurate Resonances (conviction component = 20-35 pts)
 - Without Dasham data, conviction = 0. Score is capped at 65 max. Tiers feel flat.
 - The scoring system is correctly weighted but only fully activates with African market data.
 
@@ -186,7 +186,7 @@ The risk: the market.md also claims $299-$2500/mo luxury pricing. The cohort sho
 | Factor | What's New | Why It Matters |
 |--------|-----------|----------------|
 | **Portable fan identity** | Fans carry cryptographic proof of their fandom across platforms. No one else offers this. | The fan identity is not locked into StanVault — it's portable. This is the W3C Verifiable Credentials play. |
-| **Stan Conversion Rate (SCR)** | A new industry metric: (Hold Rate x Depth Velocity x Platform Independence) / Churn Drag | Labels, managers, and investors can compare artists by SCR instead of follower count. A new language for the industry. |
+| **Resonance Conversion Rate (RCR)** | A new industry metric: (Hold Rate x Depth Velocity x Platform Independence) / Churn Drag | Labels, managers, and investors can compare artists by RCR instead of follower count. A new language for the industry. |
 | **Cross-artist fan graph** | "Fans of Artist A also verified for Artist B" — nobody has this data | The network effect moat. As more artists join, the fan graph becomes increasingly valuable. This is the Plaid play. |
 | **Conviction-weighted scoring** | Tips (money) weigh 35% of score. Follows weigh ~2%. Money can't be faked. | Aligns incentives with the Oryx/Dasham ecosystem. African payment rails become the highest-fidelity signal. |
 | **Anti-scalper verification layer** | Ticket vendors can verify a buyer is a real superfan before selling | New revenue stream: per-verification pricing for venues/promoters. |
@@ -246,7 +246,7 @@ Pricing             Free       $$$$$    Free/$$  $$$
 
 **1. Presale Verification** — "Only real fans get early access"
 - Artist creates a drop: "First 50 superfans (score 60+) get presale code for Lagos show"
-- Fan connects Spotify, Stan Score calculated, verified fans claim presale
+- Fan connects Spotify, Resonance calculated, verified fans claim presale
 - **Value:** Artist sells tickets to real fans, not scalpers. Fan feels recognized.
 - **Cohort evidence:** 62% of fans claimed drops. Highest-retention feature.
 
@@ -256,7 +256,7 @@ Pricing             Free       $$$$$    Free/$$  $$$
 - **Cohort evidence:** Artists who created 3+ drops retained at 90%.
 
 **3. Fan Intelligence for Managers** — "Which of my 5 artists is building real fans?"
-- Manager views SCR, tier distribution, hold rates across roster
+- Manager views RCR, tier distribution, hold rates across roster
 - Identifies which artist is converting listeners to superfans and which is churning
 - **Value:** Data-driven roster decisions. Resource allocation based on fan health, not streams.
 - **Cohort evidence:** 3/3 managers retained. Created 8 drops on average across their roster.
@@ -285,7 +285,7 @@ Pricing             Free       $$$$$    Free/$$  $$$
 - **Value:** Precision fan communication, not mass blasts.
 - **Cohort evidence:** Managers used this most. Artists with Emissar integration sent 3x more targeted messages.
 
-**8. Label A&R Intelligence** — "Show me artists with SCR > 2.0 and 500+ verified superfans"
+**8. Label A&R Intelligence** — "Show me artists with RCR > 2.0 and 500+ verified superfans"
 - Labels query StanVault for artists with strong fan health metrics
 - **Value:** A&R decisions based on fan conviction, not social media optics.
 - **Cohort evidence:** Not yet tested. Future enterprise play.
@@ -309,7 +309,7 @@ Pricing             Free       $$$$$    Free/$$  $$$
 | **Current tools** | Spotify for Artists (basic), Instagram insights (basic), WhatsApp broadcast lists (manual), spreadsheets |
 | **What they've tried** | Linktree (too shallow), Mailchimp (no segmentation intelligence), Patreon (fans don't want subscriptions) |
 | **Willingness to pay** | $299/mo. They already spend $200+/mo on distribution, mixing, marketing. Intelligence is a logical next spend. |
-| **Success metric** | "I know my top 50 fans by name and city. My presales sell out to real fans. My SCR is trending up." |
+| **Success metric** | "I know my top 50 fans by name and city. My presales sell out to real fans. My RCR is trending up." |
 
 **Why this ICP and not a broader "independent artist"?**
 
@@ -329,7 +329,7 @@ The cohort simulation shows why:
 | **Geography** | Lagos, London, Atlanta, Nairobi |
 | **Pain** | "I need to see fan health across my roster to allocate budget and know who's really building an audience" |
 | **Willingness to pay** | $899/mo (Patron Growth). Manages multiple artists' drops and campaigns. |
-| **Success metric** | "I can compare SCR across my roster. I know which artist deserves the marketing spend." |
+| **Success metric** | "I can compare RCR across my roster. I know which artist deserves the marketing spend." |
 
 ### Tertiary ICP: The Verified Superfan
 
@@ -342,7 +342,7 @@ The cohort simulation shows why:
 | **Monthly spend on music** | $5-$50 (tips, merch, tickets) |
 | **Pain** | "I've supported this artist since day one and there's no way to prove it. Scalpers get the presale tickets, not me." |
 | **Behavior** | Tips on Dasham, streams daily, adds to playlists, attends shows |
-| **Success metric** | "I have a verified Stan Score of 82 for Burna Boy. I get the presale code automatically." |
+| **Success metric** | "I have a verified Resonance of 82 for Burna Boy. I get the presale code automatically." |
 
 ---
 
@@ -390,9 +390,9 @@ The cohort simulation shows why:
 - Would integrate StanVault verification API into checkout
 
 **3c. Record Labels (A&R Departments)**
-- Want to find unsigned artists with high SCR (real fan health, not inflated streams)
+- Want to find unsigned artists with high RCR (real fan health, not inflated streams)
 - Currently rely on Spotify playlist placements and social media virality
-- Would pay for access to artist SCR data as a scouting tool
+- Would pay for access to artist RCR data as a scouting tool
 
 **3d. Ticketing Platforms (Eventbrite, Dice, etc.)**
 - Want to offer "verified fan presale" as a premium feature
@@ -413,7 +413,7 @@ The cohort simulation shows why:
 |-----|-----|
 | **Artists who want to own their fan relationships** | StanVault gives you the data Spotify won't. Your fans, identified, scored, and verified — portable and owned by you. |
 | **Artists running presales, drops, or exclusive access** | The drop gating system is purpose-built. Conviction-scored access, not "first come first served." |
-| **Managers who need fan health metrics across a roster** | SCR, hold rates, tier distribution — per artist, compared over time. This is the management dashboard that doesn't exist anywhere else. |
+| **Managers who need fan health metrics across a roster** | RCR, hold rates, tier distribution — per artist, compared over time. This is the management dashboard that doesn't exist anywhere else. |
 | **Artists in the African music ecosystem** | The scoring system is calibrated for conviction signals that originate in African markets (Dasham tips, city presence, Oryx/Palmlion integration). The product is at its most powerful here. |
 | **Fans who want recognition for loyalty** | Portable verification tokens. Self-initiated proof. Your fandom is now a credential, not just a feeling. |
 | **Artists who measure depth over breadth** | If you care about how many of your fans would drive 3 hours to your show, not how many liked your post, this is your tool. |
@@ -528,7 +528,7 @@ Year 1-2                 Year 2-3                 Year 3-4                Year 4
 | **Merch companies** (Shopify music stores) | Superfan-exclusive products | $0.10 per verification | Millions of transactions |
 | **Discord communities** | Verified fan roles | $50-$200/mo per server | 100K+ music Discord servers |
 | **Event promoters** | Anti-scalper verification | $500-$2,000 per event | 2M+ live events/yr |
-| **Labels (A&R)** | SCR data for scouting | $5,000-$20,000/yr per label | 1,000+ labels globally |
+| **Labels (A&R)** | RCR data for scouting | $5,000-$20,000/yr per label | 1,000+ labels globally |
 | **Streaming platforms** | Cross-platform fan data | Enterprise licensing | 5-10 major platforms |
 
 **Conservative ARR from B2B: $10-50M**
@@ -560,10 +560,10 @@ Year 1-2                 Year 2-3                 Year 3-4                Year 4
 | **Year 1** | Artist subscriptions in beachhead (Afrobeats/Amapiano) | Core. Deepen product-market fit. Add more Dasham conviction data. | $500K-$1M |
 | **Year 1.5** | Managers + Emissar campaigns | Strengthens beachhead. Managers bring their roster. | $1.5M-$3M |
 | **Year 2** | Discord bot + presale verification | Extends beachhead artists' reach. Their fans use verification in Discord servers. | $3M-$5M |
-| **Year 2.5** | Genre expansion (Latin, K-pop, UK) | New markets. Beachhead is self-sustaining with strong retention + SCR data. | $5M-$10M |
+| **Year 2.5** | Genre expansion (Latin, K-pop, UK) | New markets. Beachhead is self-sustaining with strong retention + RCR data. | $5M-$10M |
 | **Year 3** | B2B API (ticket platforms, merch) | Beachhead artists benefit — their fans verified at venue level. Beachhead gets stronger. | $10M-$20M |
 | **Year 3.5** | Fan premium features | Beachhead fans are the first premium users. They've been verifying for 2+ years. | $15M-$30M |
-| **Year 4** | Label/A&R intelligence | Beachhead artists with high SCR get discovered by labels through StanVault data. The beachhead graduates artists to bigger opportunities. | $25M-$50M |
+| **Year 4** | Label/A&R intelligence | Beachhead artists with high RCR get discovered by labels through StanVault data. The beachhead graduates artists to bigger opportunities. | $25M-$50M |
 | **Year 5** | Protocol licensing (verification standard) | StanVault verification becomes the industry standard. The beachhead is now the proof point for the entire music industry. | $50M-$100M+ |
 
 **The key principle: every expansion strengthens the beachhead.**
@@ -571,7 +571,7 @@ Year 1-2                 Year 2-3                 Year 3-4                Year 4
 - Genre expansion brings more fans into the cross-artist graph → beachhead artists get better recommendations
 - B2B API means beachhead artists' fans can use their verification at real venues
 - Fan premium features give beachhead fans more tools to prove their loyalty
-- Label intelligence means beachhead artists with high SCR get discovered
+- Label intelligence means beachhead artists with high RCR get discovered
 
 Nothing is extracted from the beachhead. Every new market addition makes the beachhead more valuable.
 
@@ -609,7 +609,7 @@ Nothing is extracted from the beachhead. Every new market addition makes the bea
 | **2** | Drop analytics dashboard | Artists who see drop performance create more drops. More drops = higher retention. |
 | **3** | Discord verification bot | The wedge into fan communities. Artists' Discord servers become the first verification touchpoint. |
 | **4** | Spotify Artist ID search (by name) | Removes onboarding friction. Currently requires manual ID entry. |
-| **5** | Dasham conviction data pipeline | Direct integration with Dasham/Oryx for real-time tip data flowing into Stan Scores. This is the scoring advantage. |
+| **5** | Dasham conviction data pipeline | Direct integration with Dasham/Oryx for real-time tip data flowing into Resonances. This is the scoring advantage. |
 
 ---
 

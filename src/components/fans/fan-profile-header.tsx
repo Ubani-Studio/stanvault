@@ -1,6 +1,6 @@
 import { Avatar, TierBadge, StanScoreBadge } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
-import { MapPin, Calendar, Mail } from 'lucide-react'
+import { MapPin, Calendar, Mail, Smartphone } from 'lucide-react'
 
 interface FanProfileHeaderProps {
   fan: {
@@ -8,6 +8,12 @@ interface FanProfileHeaderProps {
     email?: string
     avatarUrl?: string
     location?: string
+    contactPoints?: Array<{
+      channel: 'EMAIL' | 'SMS'
+      value: string
+      isPrimary: boolean
+      consentStatus: 'UNKNOWN' | 'PENDING' | 'SUBSCRIBED' | 'UNSUBSCRIBED'
+    }>
     tier: string
     stanScore: number
     firstSeenAt: string
@@ -15,6 +21,10 @@ interface FanProfileHeaderProps {
 }
 
 export function FanProfileHeader({ fan }: FanProfileHeaderProps) {
+  const primarySmsContact =
+    fan.contactPoints?.find((contactPoint) => contactPoint.channel === 'SMS' && contactPoint.isPrimary) ||
+    fan.contactPoints?.find((contactPoint) => contactPoint.channel === 'SMS')
+
   return (
     <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
       <div className="flex items-start gap-6">
@@ -33,6 +43,15 @@ export function FanProfileHeader({ fan }: FanProfileHeaderProps) {
               <div className="flex items-center gap-1.5">
                 <Mail className="w-4 h-4" />
                 {fan.email}
+              </div>
+            )}
+            {primarySmsContact && (
+              <div className="flex items-center gap-1.5">
+                <Smartphone className="w-4 h-4" />
+                {primarySmsContact.value}
+                <span className="text-gray-700">
+                  ({primarySmsContact.consentStatus.toLowerCase()})
+                </span>
               </div>
             )}
             {fan.location && (

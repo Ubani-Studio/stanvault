@@ -15,7 +15,7 @@ export function CampaignResult({ result }: CampaignResultProps) {
         <p className="text-caption text-gray-500 mt-0.5">
           {result.campaignId} · {result.status}
           {result.dispatch
-            ? ` · ${result.dispatch.deliveryMode || 'TEXT'} via ${result.dispatch.provider}`
+            ? ` · ${result.dispatch.deliveryChannel || result.dispatch.deliveryMode || 'TEXT'} via ${result.dispatch.provider}`
             : ''}
         </p>
       </CardHeader>
@@ -34,6 +34,11 @@ export function CampaignResult({ result }: CampaignResultProps) {
             <span className="text-gray-400">
               Preview <span className="text-white">{result.totals.previewOnly}</span>
             </span>
+            {!!result.totals.skippedNoChannel && (
+              <span className="text-gray-400">
+                Skipped <span className="text-white">{result.totals.skippedNoChannel}</span>
+              </span>
+            )}
           </div>
         )}
 
@@ -43,10 +48,10 @@ export function CampaignResult({ result }: CampaignResultProps) {
           <div className="space-y-1 pt-2">
             {result.deliveryResultsPreview.map((item) => (
               <div
-                key={`${item.fanId}-${item.email}`}
+                key={`${item.fanId}-${item.target || item.email || 'recipient'}`}
                 className="flex items-center gap-4 py-1 text-caption"
               >
-                <span className="text-gray-300 min-w-0 truncate">{item.email}</span>
+                <span className="text-gray-300 min-w-0 truncate">{item.target || item.email}</span>
                 <span className="text-gray-500">{item.status}</span>
               </div>
             ))}

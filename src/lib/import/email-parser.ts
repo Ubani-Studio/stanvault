@@ -1,11 +1,12 @@
-import { Platform, EventType } from '@prisma/client'
-
 export interface ParsedEmailSubscriber {
   email: string
   firstName?: string
   lastName?: string
   displayName: string
   subscribedAt?: Date
+  phoneNumber?: string
+  smsConsent?: 'SUBSCRIBED' | 'PENDING' | 'UNSUBSCRIBED'
+  smsOptInAt?: Date
   // Email engagement metrics
   emailsReceived?: number
   emailsOpened?: number
@@ -35,6 +36,9 @@ const LOCATION_ALIASES = ['location', 'address', 'city_state', 'region']
 const COUNTRY_ALIASES = ['country', 'country_code']
 const CITY_ALIASES = ['city']
 const TAGS_ALIASES = ['tags', 'groups', 'segments', 'lists']
+const PHONE_ALIASES = ['phone', 'phone_number', 'phone number', 'mobile', 'mobile_number', 'sms_phone']
+const SMS_CONSENT_ALIASES = ['sms_opt_in', 'sms_consent', 'sms_subscribed', 'text_opt_in', 'text_consent', 'sms_marketing_consent']
+const SMS_OPT_IN_AT_ALIASES = ['sms_opt_in_at', 'sms_subscribed_at', 'text_opt_in_at', 'sms_consent_at']
 
 /**
  * Parse CSV content into email subscribers
@@ -73,6 +77,9 @@ export function parseEmailCSV(csvContent: string): CSVParseResult {
   const countryIndex = findColumnIndex(headers, COUNTRY_ALIASES)
   const cityIndex = findColumnIndex(headers, CITY_ALIASES)
   const tagsIndex = findColumnIndex(headers, TAGS_ALIASES)
+  const phoneIndex = findColumnIndex(headers, PHONE_ALIASES)
+  const smsConsentIndex = findColumnIndex(headers, SMS_CONSENT_ALIASES)
+  const smsOptInAtIndex = findColumnIndex(headers, SMS_OPT_IN_AT_ALIASES)
 
   // Parse data rows
   for (let i = 1; i < lines.length; i++) {
@@ -119,6 +126,15 @@ export function parseEmailCSV(csvContent: string): CSVParseResult {
       const location = locationIndex >= 0 ? values[locationIndex]?.trim() : undefined
       const country = countryIndex >= 0 ? values[countryIndex]?.trim() : undefined
       const city = cityIndex >= 0 ? values[cityIndex]?.trim() : undefined
+      const phoneNumber = phoneIndex >= 0 ? values[phoneIndex]?.trim() : undefined
+      const smsConsent = parseSmsConsent(
+        smsConsentIndex >= 0 ? values[smsConsentIndex] : undefined,
+        phoneNumber
+      )
+      const smsOptInAt =
+        smsOptInAtIndex >= 0 && values[smsOptInAtIndex]
+          ? parseDate(values[smsOptInAtIndex])
+          : undefined
 
       // Parse tags
       let tags: string[] | undefined
@@ -132,6 +148,9 @@ export function parseEmailCSV(csvContent: string): CSVParseResult {
         lastName,
         displayName,
         subscribedAt,
+        phoneNumber,
+        smsConsent,
+        smsOptInAt,
         emailsOpened,
         emailsClicked,
         location,
@@ -217,6 +236,23 @@ function parseDate(value: string): Date | undefined {
   }
 
   return undefined
+}
+
+function parseSmsConsent(
+  value: string | undefined,
+  phoneNumber: string | undefined
+): 'SUBSCRIBED' | 'PENDING' | 'UNSUBSCRIBED' | undefined {
+  const normalized = value?.trim().toLowerCase()
+
+  if (!normalized) return phoneNumber ? 'PENDING' : undefined
+  if (['true', 'yes', 'y', '1', 'subscribed', 'opted in', 'opted_in', 'consented'].includes(normalized)) {
+    return 'SUBSCRIBED'
+  }
+  if (['false', 'no', 'n', '0', 'unsubscribed', 'opted out', 'opted_out', 'revoked'].includes(normalized)) {
+    return 'UNSUBSCRIBED'
+  }
+
+  return phoneNumber ? 'PENDING' : undefined
 }
 
 /**

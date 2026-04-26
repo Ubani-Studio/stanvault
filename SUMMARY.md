@@ -16,7 +16,7 @@ A **fan verification protocol** for artists. Not another analytics dashboard —
 - Artist authentication (email/password, Google)
 - Platform connections (Spotify OAuth)
 - Fan database with tier system (Casual → Engaged → Dedicated → Superfan)
-- Stan Conversion Rate (SCR) analytics
+- Resonance Conversion Rate (RCR) analytics
 - **Verification-gated drops** — create exclusive content with tier/score requirements
 
 #### 2. Fan Portal (`/fan/*`)
@@ -57,7 +57,7 @@ A **fan verification protocol** for artists. Not another analytics dashboard —
 │  2. Sets Spotify Artist ID in Settings                          │
 │  3. Creates a Drop with gating rules:                           │
 │     - Minimum tier (e.g., DEDICATED+)                           │
-│     - Minimum stan score (e.g., 50+)                            │
+│     - Minimum Resonance (e.g., 50+)                            │
 │     - Max claims (scarcity)                                     │
 │  4. Shares drop link: /drop/[slug]                              │
 └─────────────────────────────────────────────────────────────────┘

@@ -8,6 +8,7 @@ export type CampaignResponse = {
     mode: string
     provider: string
     deliveryMode?: 'TEXT' | 'VOICE'
+    deliveryChannel?: 'EMAIL' | 'SMS' | 'VOICE'
     voiceProvider?: string
     fromEmail: string
     subject: string
@@ -20,6 +21,7 @@ export type CampaignResponse = {
     segmentCount: number
     queuedRecipients: number
     skippedNoEmail: number
+    skippedNoChannel?: number
     sent: number
     failed: number
     previewOnly: number
@@ -31,7 +33,8 @@ export type CampaignResponse = {
   }
   deliveryResultsPreview?: Array<{
     fanId: string
-    email: string
+    email?: string
+    target?: string
     status: string
     messageId?: string | null
     error?: string
@@ -70,6 +73,7 @@ export type CampaignHistoryItem = {
   status: string
   dispatchMode: string | null
   provider: string | null
+  deliveryChannel?: string | null
   subject: string | null
   minTier: string | null
   minStanScore: number | null
@@ -81,6 +85,17 @@ export type CampaignHistoryItem = {
   failedCount: number
   previewOnlyCount: number
   createdAt: string
+}
+
+export type CampaignAudienceSummary = {
+  matchingFans: number
+  selectedFans: number
+  emailEligibleFans: number
+  smsEligibleFans: number
+  smsKnownFans: number
+  smsPendingFans: number
+  smsUnsubscribedFans: number
+  smsConfigured: boolean
 }
 
 export type VariablePreset = {

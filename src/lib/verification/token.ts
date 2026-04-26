@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { FanTier } from '@prisma/client'
-import { createHmac, randomBytes } from 'crypto'
+import { randomBytes } from 'crypto'
 import { addDays, differenceInMonths } from 'date-fns'
+import { getKeyByKid, getSigningKey, signWithKey } from './keys'
 
-const TOKEN_SECRET = process.env.VERIFICATION_TOKEN_SECRET || process.env.AUTH_SECRET || 'default-secret'
 const DEFAULT_TOKEN_EXPIRY_DAYS = 30
 
 export interface VerificationTokenData {
@@ -80,9 +80,12 @@ export async function generateVerificationToken(
     expiresAt: expiresAt.getTime(),
   }
 
-  // Sign the payload
-  const signature = signPayload(payload)
-  const token = `${Buffer.from(JSON.stringify(payload)).toString('base64url')}.${signature}`
+  // Sign the payload with the active rotation key. The kid is embedded in the
+  // payload so future rotations can verify older tokens until they expire.
+  const signingKey = getSigningKey()
+  const signedPayload = { ...payload, kid: signingKey.kid }
+  const signature = signWithKey(signedPayload, signingKey)
+  const token = `${Buffer.from(JSON.stringify(signedPayload)).toString('base64url')}.${signature}`
 
   // Store in database
   await prisma.fanVerificationToken.create({
@@ -116,8 +119,14 @@ export async function verifyToken(token: string): Promise<VerificationResult> {
     // Decode payload
     const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
 
-    // Verify signature
-    const expectedSignature = signPayload(payload)
+    // Resolve the key to verify against. Tokens issued post-rotation carry a kid;
+    // legacy tokens fall back to the active signing key (which is the legacy slot).
+    const kid = (payload as { kid?: string }).kid
+    const key = kid ? getKeyByKid(kid) : getSigningKey()
+    if (!key) {
+      return { valid: false, error: 'Unknown signing key' }
+    }
+    const expectedSignature = signWithKey(payload, key)
     if (signature !== expectedSignature) {
       return { valid: false, error: 'Invalid signature' }
     }
@@ -230,11 +239,4 @@ export async function cleanupExpiredTokens(): Promise<number> {
   return result.count
 }
 
-/**
- * Sign a payload with HMAC
- */
-function signPayload(payload: object): string {
-  const hmac = createHmac('sha256', TOKEN_SECRET)
-  hmac.update(JSON.stringify(payload))
-  return hmac.digest('base64url')
-}
+// Signature primitives moved to lib/verification/keys.ts to support rotation.

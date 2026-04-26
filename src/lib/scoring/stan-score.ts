@@ -202,8 +202,12 @@ function calculateRecencyScore(lastActiveAt: Date): number {
   return 0
 }
 
-// Determine tier based on total score
+// Determine tier based on total score.
+// ELITE is reserved for the top 1% by Resonance (folded from Convicta — see ARCHIVE_LOG.md).
+// Threshold is intentionally high (>=92) so it stays scarce by construction; the percentile-true
+// "top 1%" calculation is upgraded later when a global cohort distribution is available.
 function determineTier(score: number): FanTier {
+  if (score >= 92) return 'ELITE'
   if (score >= 75) return 'SUPERFAN'
   if (score >= 50) return 'DEDICATED'
   if (score >= 25) return 'ENGAGED'

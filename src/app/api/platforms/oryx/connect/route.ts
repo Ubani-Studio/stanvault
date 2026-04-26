@@ -1,9 +1,10 @@
 // Connect Oryx — pull historical backer data from Oryx conviction API
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Platform, EventType } from '@prisma/client'
+import { ContactConsentStatus, Platform, EventType } from '@prisma/client'
 import { calculateStanScore } from '@/lib/scoring/stan-score'
+import { upsertFanSmsContact } from '@/lib/fan-contact-points'
 
 const ORYX_API_URL = process.env.ORYX_API_URL || 'http://localhost:4000'
 const ECOSYSTEM_API_SECRET = process.env.ECOSYSTEM_API_SECRET || ''
@@ -36,7 +37,11 @@ interface OryxBackersResponse {
   syncedAt: string
 }
 
-export async function POST(req: NextRequest) {
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error'
+}
+
+export async function POST() {
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -94,8 +99,8 @@ export async function POST(req: NextRequest) {
 
       const oryxArtist = await lookupRes.json()
       oryxArtistId = oryxArtist.id
-    } catch (error: any) {
-      if (error.message?.includes('Oryx lookup failed')) throw error
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('Oryx lookup failed')) throw error
       return NextResponse.json(
         { error: 'Could not reach Oryx. Is the server running?' },
         { status: 502 }
@@ -233,6 +238,19 @@ export async function POST(req: NextRequest) {
           })
         }
 
+        if (backer.phone) {
+          try {
+            await upsertFanSmsContact(prisma, {
+              fanId: existingFan.id,
+              phoneNumber: backer.phone,
+              consentStatus: ContactConsentStatus.PENDING,
+              consentSource: 'oryx_backer_sync',
+            })
+          } catch (error) {
+            console.warn(`[Oryx] Skipping invalid phone for fan ${existingFan.id}:`, error)
+          }
+        }
+
         updatedCount++
       } else {
         // Create new fan from Oryx backer
@@ -249,7 +267,7 @@ export async function POST(req: NextRequest) {
           artistCity: user.location,
         })
 
-        await prisma.fan.create({
+        const createdFan = await prisma.fan.create({
           data: {
             userId,
             displayName: backer.displayName,
@@ -292,6 +310,19 @@ export async function POST(req: NextRequest) {
           },
         })
 
+        if (backer.phone) {
+          try {
+            await upsertFanSmsContact(prisma, {
+              fanId: createdFan.id,
+              phoneNumber: backer.phone,
+              consentStatus: ContactConsentStatus.PENDING,
+              consentSource: 'oryx_backer_sync',
+            })
+          } catch (error) {
+            console.warn(`[Oryx] Skipping invalid phone for fan ${createdFan.id}:`, error)
+          }
+        }
+
         importedCount++
       }
     }
@@ -323,16 +354,16 @@ export async function POST(req: NextRequest) {
       updated: updatedCount,
       totalFans: totalFanCount,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Oryx Connect] Error:', error)
     return NextResponse.json(
-      { error: 'Failed to connect Oryx', message: error.message },
+      { error: 'Failed to connect Oryx', message: getErrorMessage(error) },
       { status: 500 }
     )
   }
 }
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   try {
     const session = await auth()
     if (!session?.user?.id) {

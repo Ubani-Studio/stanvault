@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button, Skeleton } from '@/components/ui'
 import {
   FanProfileHeader,
+  FanContacts,
   StanScoreBreakdown,
   PlatformLinksList,
   JourneyTimeline,
@@ -119,6 +120,13 @@ export default function FanProfilePage({ params }: FanPageProps) {
 
         {/* Right column - Journey and Notes */}
         <div className="space-y-6">
+          <FanContacts
+            fanId={fanId}
+            contactPoints={fan.contactPoints || []}
+            onSaved={() => {
+              queryClient.invalidateQueries({ queryKey: ['fan', fanId] })
+            }}
+          />
           {eventsLoading ? (
             <Skeleton className="h-60" />
           ) : (

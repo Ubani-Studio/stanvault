@@ -27,6 +27,9 @@ export function CampaignHistory({ history, loading }: CampaignHistoryProps) {
             {new Date(run.createdAt).toLocaleString()}
           </span>
           <span className="text-gray-400 w-16 shrink-0">{run.status}</span>
+          {run.deliveryChannel && (
+            <span className="text-gray-500 w-14 shrink-0">{run.deliveryChannel}</span>
+          )}
           <span className="text-gray-300 truncate flex-1">{run.subject || '-'}</span>
           <span className="text-gray-400 tabular-nums">{run.sentCount} sent</span>
           {run.failedCount > 0 && (

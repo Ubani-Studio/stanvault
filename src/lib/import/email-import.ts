@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { parseEmailCSV, ParsedEmailSubscriber, detectEmailProvider } from './email-parser'
 import { calculateStanScore } from '@/lib/scoring/stan-score'
-import { Platform, EventType } from '@prisma/client'
+import { ContactConsentStatus, Platform, EventType } from '@prisma/client'
 import { recordFanEvent } from '@/lib/events'
+import { upsertFanSmsContact } from '@/lib/fan-contact-points'
 
 interface ImportResult {
   success: boolean
@@ -51,7 +52,7 @@ export async function importEmailSubscribers(
 
     for (const subscriber of batch) {
       try {
-        const { isNew } = await processEmailSubscriber(userId, subscriber)
+        const { isNew } = await processEmailSubscriber(userId, subscriber, result.provider)
         if (isNew) {
           result.imported++
         } else {
@@ -101,7 +102,8 @@ export async function importEmailSubscribers(
 
 async function processEmailSubscriber(
   userId: string,
-  subscriber: ParsedEmailSubscriber
+  subscriber: ParsedEmailSubscriber,
+  provider: string
 ): Promise<{ fanId: string; isNew: boolean }> {
   // Check for existing fan by email
   const existingFan = await prisma.fan.findFirst({
@@ -159,6 +161,7 @@ async function processEmailSubscriber(
 
     // Recalculate score
     await recalculateFanScore(existingFan.id)
+    await upsertImportedSmsContact(existingFan.id, subscriber, provider)
 
     return { fanId: existingFan.id, isNew: false }
   }
@@ -215,7 +218,40 @@ async function processEmailSubscriber(
     occurredAt: firstSeenAt,
   })
 
+  await upsertImportedSmsContact(newFan.id, subscriber, provider)
+
   return { fanId: newFan.id, isNew: true }
+}
+
+async function upsertImportedSmsContact(
+  fanId: string,
+  subscriber: ParsedEmailSubscriber,
+  provider: string
+) {
+  if (!subscriber.phoneNumber) return
+
+  await upsertFanSmsContact(prisma, {
+    fanId,
+    phoneNumber: subscriber.phoneNumber,
+    consentStatus: mapSmsConsent(subscriber.smsConsent),
+    consentSource: `csv_import:${provider.toLowerCase()}`,
+    consentCapturedAt: subscriber.smsOptInAt || subscriber.subscribedAt || null,
+  })
+}
+
+function mapSmsConsent(
+  smsConsent: ParsedEmailSubscriber['smsConsent']
+): ContactConsentStatus {
+  switch (smsConsent) {
+    case 'SUBSCRIBED':
+      return ContactConsentStatus.SUBSCRIBED
+    case 'UNSUBSCRIBED':
+      return ContactConsentStatus.UNSUBSCRIBED
+    case 'PENDING':
+      return ContactConsentStatus.PENDING
+    default:
+      return ContactConsentStatus.PENDING
+  }
 }
 
 async function recalculateFanScore(fanId: string) {

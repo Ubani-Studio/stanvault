@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout'
 import { Card, CardHeader, CardTitle, CardContent, Input, Button, Select } from '@/components/ui'
 import { Check, Loader2, ExternalLink } from 'lucide-react'
 import ProfilePhotoUpload from '@/components/profile/ProfilePhotoUpload'
+import { useProfileImage } from '@/hooks/use-profile-image'
 
 export default function SettingsPage() {
   const { data: session, update } = useSession()
@@ -29,7 +30,7 @@ export default function SettingsPage() {
   const [ackTemplates, setAckTemplates] = useState<AckTemplate[]>([])
   const [ackSaving, setAckSaving] = useState<string | null>(null)
   const [ackSaved, setAckSaved] = useState<string | null>(null)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const { profileImage, setOptimistic: setProfileImage } = useProfileImage()
 
   useEffect(() => {
     if (session?.user) {
@@ -38,14 +39,6 @@ export default function SettingsPage() {
       setSpotifyArtistId(session.user.spotifyArtistId || '')
     }
   }, [session])
-
-  // Fetch profile image from API (not session — too large for JWT)
-  useEffect(() => {
-    fetch('/api/settings/profile/image', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => setProfileImage(data.image))
-      .catch(() => {})
-  }, [])
 
   useEffect(() => {
     const loadProfileSettings = async () => {
@@ -165,7 +158,7 @@ export default function SettingsPage() {
                     body: JSON.stringify({ image: dataUrl }),
                   })
                   if (!res.ok) throw new Error('Failed to upload')
-                  setProfileImage(dataUrl)
+                  setProfileImage(dataUrl) // Updates React Query cache — Header picks it up instantly
                 }}
                 size="md"
               />

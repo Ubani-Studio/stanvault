@@ -30,15 +30,15 @@ If a feature doesn't answer that question, it doesn't belong here.
 ## What StanVault Already Has (Keep & Deepen)
 
 1. **Two-sided marketplace** — artist portal + fan portal (network effect moat)
-2. **Stan Score** (0-100) — platform (30pts), engagement (40pts), longevity (20pts), recency (10pts)
-3. **SCR (Stan Conversion Rate)** — Hold Rate x Depth Velocity x Platform Independence / Churn Drag
+2. **Resonance** (0-100) — platform (30pts), engagement (40pts), longevity (20pts), recency (10pts)
+3. **RCR (Resonance Conversion Rate)** — Hold Rate x Depth Velocity x Platform Independence / Churn Drag
 4. **Cryptographic verification tokens** — fans carry proof of superfan status
 5. **W3C Verifiable Credentials export** — decentralized identity standard
 6. **Spotify OAuth fan discovery** — automatic fan ingestion from listening data
 7. **Verification-gated Drops** — presale codes, downloads, links, messages
 8. **Predictive superfan signals** — ML-weighted conversion probability
 9. **Fan event timeline** — 13 event types (FIRST_STREAM → BECAME_SUPERFAN)
-10. **Daily snapshots** — historical SCR/hold rate/tier trends
+10. **Daily snapshots** — historical RCR/hold rate/tier trends
 
 ## What NOT to Port from Tessera
 

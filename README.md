@@ -31,8 +31,8 @@ The **$4.5B superfan economy** exists, but artists can't access it because they 
 A **Fan Intelligence Platform** that gives artists ownership of their fan relationships and gives fans ownership of their identity.
 
 **For Artists:**
-- **Stan Score**: Algorithmic ranking of fan dedication (streams, saves, follows, longevity)
-- **Stan Conversion Rate (SCR)**: Measure how efficiently you turn listeners into superfans
+- **Resonance**: Algorithmic ranking of fan dedication (streams, saves, follows, longevity)
+- **Resonance Conversion Rate (RCR)**: Measure how efficiently you turn listeners into Core fans
 - **Fan Verification Protocol**: Cryptographic proof of fan status for presales, Discord, merch
 
 **For Fans:**
@@ -73,7 +73,7 @@ Every decision prioritizes lasting fan relationships over momentary engagement m
 | **Fan-to-Fan Referral Tracking** | Prove word-of-mouth, reward organic growth | Artists see which fans drive new fans |
 | **Decentralized Identity (DID)** | Fan credentials on-chain, platform-proof | Fans own identity even if Stanvault dies |
 | **Predictive Superfan Signals** | ML on listening patterns before conversion | Artists catch superfans early |
-| **Artist Collective Insights** | Aggregate SCR benchmarks by genre/size | Industry-standard fan health metric |
+| **Artist Collective Insights** | Aggregate RCR benchmarks by genre/size | Industry-standard fan health metric |
 | **Fan Labor Marketplace** | Superfans offer services (street team, UGC) | Direct fan-artist economic relationship |
 | **Anti-Scalper Verification** | Ticket access tied to verified fan status | Kill bots, reward real fans |
 

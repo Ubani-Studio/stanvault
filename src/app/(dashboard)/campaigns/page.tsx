@@ -21,6 +21,7 @@ import {
   type VariablePreset,
   type CampaignEntitlements,
   type CampaignAnalytics as CampaignAnalyticsType,
+  type CampaignAudienceSummary,
   type VoiceProvider,
   defaultVoiceProviders,
   suggestedVariableFields,
@@ -38,6 +39,7 @@ export default function CampaignsPage() {
   const [minTier, setMinTier] = useState('SUPERFAN')
   const [mood, setMood] = useState('excited')
   const [deliveryMode, setDeliveryMode] = useState<'TEXT' | 'VOICE'>('TEXT')
+  const [textChannel, setTextChannel] = useState<'EMAIL' | 'SMS'>('EMAIL')
   const [dryRun, setDryRun] = useState(true)
 
   // ── Targeting ────────────────────────────────────────────────────────────
@@ -64,7 +66,6 @@ export default function CampaignsPage() {
   const [presets, setPresets] = useState<VariablePreset[]>([])
   const [selectedPresetId, setSelectedPresetId] = useState('')
   const [presetName, setPresetName] = useState('')
-  const [presetsLoading, setPresetsLoading] = useState(false)
   const [presetActionLoading, setPresetActionLoading] = useState(false)
   const [presetError, setPresetError] = useState<string | null>(null)
   const [presetMessage, setPresetMessage] = useState<string | null>(null)
@@ -103,6 +104,7 @@ export default function CampaignsPage() {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [entitlements, setEntitlements] = useState<CampaignEntitlements | null>(null)
   const [analytics, setAnalytics] = useState<CampaignAnalyticsType | null>(null)
+  const [audienceSummary, setAudienceSummary] = useState<CampaignAudienceSummary | null>(null)
 
   // ── Refs ──────────────────────────────────────────────────────────────────
   const composeFormRef = useRef<ComposeFormRef | null>(null)
@@ -470,7 +472,6 @@ export default function CampaignsPage() {
   }
 
   async function fetchPresets() {
-    setPresetsLoading(true)
     setPresetError(null)
     try {
       const response = await fetch('/api/campaigns/stanvault/presets', { cache: 'no-store' })
@@ -479,8 +480,6 @@ export default function CampaignsPage() {
       setPresets(data.presets || [])
     } catch (err) {
       setPresetError(err instanceof Error ? err.message : 'Failed to fetch presets')
-    } finally {
-      setPresetsLoading(false)
     }
   }
 
@@ -522,6 +521,24 @@ export default function CampaignsPage() {
     }
   }
 
+  const fetchAudience = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        minTier,
+        minStanScore: Number.isNaN(parseInt(minStanScore, 10)) ? '70' : String(parseInt(minStanScore, 10)),
+        limit: Number.isNaN(parseInt(limit, 10)) ? '100' : String(parseInt(limit, 10)),
+      })
+      const response = await fetch(`/api/campaigns/stanvault/audience?${params}`, {
+        cache: 'no-store',
+      })
+      const data = await response.json()
+      if (!response.ok) return
+      setAudienceSummary(data)
+    } catch {
+      // Non-blocking
+    }
+  }, [limit, minStanScore, minTier])
+
   useEffect(() => {
     void fetchHistory()
     void fetchPresets()
@@ -529,6 +546,10 @@ export default function CampaignsPage() {
     void fetchSavedVoices()
     void fetchAnalytics()
   }, [fetchSavedVoices])
+
+  useEffect(() => {
+    void fetchAudience()
+  }, [fetchAudience, minTier, minStanScore, limit])
 
   // ── CTA completion ────────────────────────────────────────────────────────
   async function handleLogCompletion(proofUrl: string, proofNote: string): Promise<string | null> {
@@ -594,6 +615,7 @@ export default function CampaignsPage() {
           limit: Number.isNaN(parseInt(limit, 10)) ? 100 : parseInt(limit, 10),
           mood,
           deliveryMode,
+          textChannel,
           voiceConfigMode: deliveryMode === 'VOICE' ? (voiceSetupMode === 'advanced' ? 'ADVANCED' : 'SIMPLE') : undefined,
           voiceModelId: deliveryMode === 'VOICE' ? voiceModelId || undefined : undefined,
           voiceProvider: deliveryMode === 'VOICE' ? effectiveVoiceProvider : undefined,
@@ -604,6 +626,7 @@ export default function CampaignsPage() {
           ctaLabel: actionCtaPresets.find((p) => p.id === getSelectedActionCtaPresetId())?.label || undefined,
           ctaDeadline: ctaDeadline || undefined,
           ctaProofInstruction: ctaProofInstruction || undefined,
+          textChannel: deliveryMode === 'TEXT' ? textChannel : undefined,
           dryRun,
         }),
       })
@@ -694,7 +717,10 @@ export default function CampaignsPage() {
             onMoodChange={setMood}
             deliveryMode={deliveryMode}
             onDeliveryModeChange={setDeliveryMode}
+            textChannel={textChannel}
+            onTextChannelChange={setTextChannel}
             entitlements={entitlements}
+            audienceSummary={audienceSummary}
             fromEmail={fromEmail}
             onFromEmailChange={setFromEmail}
             replyTo={replyTo}

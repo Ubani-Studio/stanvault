@@ -65,13 +65,13 @@ That's a different product. StanVault is built around streaming + financial sign
 | Bulk screening of 100+ artists | No batch evaluation |
 | Integration with existing A&R workflow | No CRM/pipeline integration |
 
-An A&R would need a completely different interface: read-only artist cards with SCR, tier distribution, and hold rate — accessible without creating an account. That's a B2B API product, not the core SaaS.
+An A&R would need a completely different interface: read-only artist cards with RCR, tier distribution, and hold rate — accessible without creating an account. That's a B2B API product, not the core SaaS.
 
-**Where A&Rs matter:** They're a reason for artists to USE StanVault. "My SCR is 2.4 and I have 127 verified superfans" is a better pitch to a label than "I have 50K monthly listeners." If artists can export/share their StanVault dashboard as a pitch deck, A&Rs become indirect demand generators.
+**Where A&Rs matter:** They're a reason for artists to USE StanVault. "My RCR is 2.4 and I have 127 verified superfans" is a better pitch to a label than "I have 50K monthly listeners." If artists can export/share their StanVault dashboard as a pitch deck, A&Rs become indirect demand generators.
 
-**What to build (not now, later):** A public artist profile page (`/artist/[slug]`) showing SCR, tier distribution, and drop history. Artist opts in. A&Rs can view without an account. This is Phase 2-3, not beta.
+**What to build (not now, later):** A public artist profile page (`/artist/[slug]`) showing RCR, tier distribution, and drop history. Artist opts in. A&Rs can view without an account. This is Phase 2-3, not beta.
 
-**Verdict:** Don't target A&Rs as users. Let artists use StanVault data to pitch A&Rs. The A&R play comes when StanVault has enough artists that labels want API access to the SCR data.
+**Verdict:** Don't target A&Rs as users. Let artists use StanVault data to pitch A&Rs. The A&R play comes when StanVault has enough artists that labels want API access to the RCR data.
 
 ---
 
@@ -151,7 +151,7 @@ African music fandom runs on WhatsApp groups and Telegram channels, not Discord.
 
 ### Blindspot 3: The Manager Dashboard Gap
 
-The beta analysis showed 100% retention for managers. But StanVault has no multi-artist view. Each manager creates one account per artist. There's no "my roster" dashboard with comparative SCR, tier distributions, and cross-roster insights.
+The beta analysis showed 100% retention for managers. But StanVault has no multi-artist view. Each manager creates one account per artist. There's no "my roster" dashboard with comparative RCR, tier distributions, and cross-roster insights.
 
 **Fix (for beta):** Not a code change — a workaround. Managers create one account and add all their artists' fans manually. Post-beta, build a proper multi-artist workspace.
 

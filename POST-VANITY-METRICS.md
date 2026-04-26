@@ -10,11 +10,11 @@ Vanity metrics tell artists they have fans. They don't tell artists *who* those 
 
 ## Imprint's Metrics
 
-### Core Conversion Rate (CCR)
+### Resonance Conversion Rate (RCR)
 
-The single number that matters. CCR measures how effectively an artist converts casual listeners into Core fans -- the fans who buy merch, attend shows, tip, and eventually hold tokens on Imperium.
+The single number that matters. RCR measures how effectively an artist converts casual listeners into Core fans -- the fans who buy merch, attend shows, tip, and eventually hold tokens on Imperium.
 
-**CCR = (Retention × Depth × Reach) / Fade Rate**
+**RCR = (Retention × Depth × Reach) / Fade Rate**
 
 This is the moat. No other platform measures this because no other platform has moved past follower counts. Spotify can tell you how many people listened. Imprint tells you how many people *stayed*.
 
@@ -29,7 +29,7 @@ This is the moat. No other platform measures this because no other platform has 
 
 **Interpretation scale:**
 
-| CCR | Rating |
+| RCR | Rating |
 |-----|--------|
 | 3.0+ | Exceptional -- audience builds lasting connections |
 | 1.5+ | Strong -- most listeners become genuine fans |
@@ -37,7 +37,7 @@ This is the moat. No other platform measures this because no other platform has 
 | 0.2+ | Below average -- focus on retention and depth |
 | < 0.2 | Low -- high fade rate or shallow depth |
 
-### Pulse Score (0-100)
+### Resonance (0-100)
 
 Individual fan conviction. How deep is *this* fan's relationship with the artist?
 
@@ -50,9 +50,9 @@ Individual fan conviction. How deep is *this* fan's relationship with the artist
 
 ### Fan Tiers
 
-Pulse scores map to tiers. The tier system is a monochrome hierarchy -- brightness equals conviction.
+Resonance scores map to tiers. The tier system is a monochrome hierarchy -- brightness equals conviction.
 
-| Tier | Pulse Range | What it means |
+| Tier | Resonance Range | What it means |
 |------|-------------|---------------|
 | **Core** | 75-100 | The real ones. Buy merch, attend shows, evangelize. |
 | **Strong** | 50-74 | Engaged and deepening. On the path to Core. |
@@ -69,10 +69,10 @@ The stacked bar showing the breakdown across tiers. At a glance: is the artist b
 
 | Vanity Metric | Why it's broken | Imprint replacement |
 |---------------|----------------|---------------------|
-| Follower count | Measures attention, not conviction | Pulse Score + Tier |
+| Follower count | Measures attention, not conviction | Resonance + Tier |
 | Stream count | Passive consumption ≠ fandom | Engagement score (weighted) |
 | Like count | Zero-cost action, no signal | Cross-platform Reach |
-| Engagement rate | Rewards controversy, not loyalty | CCR |
+| Engagement rate | Rewards controversy, not loyalty | RCR |
 | Monthly listeners | Churn-blind, no retention signal | Retention + Fade Rate |
 
 ---
@@ -80,9 +80,9 @@ The stacked bar showing the breakdown across tiers. At a glance: is the artist b
 ## Why This Is the Moat
 
 1. **No one else measures Core conversion.** Spotify, Apple Music, YouTube -- they measure consumption. Imprint measures conviction.
-2. **The data compounds.** Every fan interaction deepens the Pulse model. The longer an artist uses Imprint, the more accurate the scoring becomes. Switching costs increase over time.
-3. **It connects to revenue.** CCR isn't academic -- it directly predicts which fans will convert on Imperium (token purchases, royalty splits). Post-vanity metrics lead to post-vanity revenue.
-4. **Artists can act on it.** Knowing your CCR is 0.3 tells you to focus on retention. Knowing it's 2.5 tells you to scale acquisition. Vanity metrics don't give you a next step.
+2. **The data compounds.** Every fan interaction deepens the Resonance model. The longer an artist uses Imprint, the more accurate the scoring becomes. Switching costs increase over time.
+3. **It connects to revenue.** RCR isn't academic -- it directly predicts which fans will convert on Imperium (token purchases, royalty splits). Post-vanity metrics lead to post-vanity revenue.
+4. **Artists can act on it.** Knowing your RCR is 0.3 tells you to focus on retention. Knowing it's 2.5 tells you to scale acquisition. Vanity metrics don't give you a next step.
 
 ---
 
@@ -127,7 +127,7 @@ This is qualitative insight no analytics platform provides. The artist learns wh
 - Shown only to the artist. Not public, not a comments section.
 - No emoji reactions. No likes. Just the words.
 
-**Incentive:** Fans who add context receive a small Pulse bump (2-3 points under engagement). This isn't gamification -- fans who articulate their connection are demonstrably more engaged. The score reflects reality.
+**Incentive:** Fans who add context receive a small Resonance bump (2-3 points under engagement). This isn't gamification -- fans who articulate their connection are demonstrably more engaged. The score reflects reality.
 
 ### Dashboard Focus
 
@@ -153,14 +153,14 @@ Artist acknowledges conviction (personalized message, unlock, title)
         ↓
 Fan deepens conviction (because they were seen)
         ↓
-CCR rises (retention + depth velocity increase)
+RCR rises (retention + depth velocity increase)
         ↓
-Revenue follows (higher CCR = sustainable income, not more followers)
+Revenue follows (higher RCR = sustainable income, not more followers)
         ↓
 Fan gives more conviction (the flywheel spins)
 ```
 
-The flywheel only spins if the acknowledgment step happens. Every other step is automatic -- fans engage naturally, CCR calculates itself, revenue settles on-chain. But acknowledgment requires the artist to act. Imprint's job is to make that action effortless.
+The flywheel only spins if the acknowledgment step happens. Every other step is automatic -- fans engage naturally, RCR calculates itself, revenue settles on-chain. But acknowledgment requires the artist to act. Imprint's job is to make that action effortless.
 
 ### Fan Incentive
 

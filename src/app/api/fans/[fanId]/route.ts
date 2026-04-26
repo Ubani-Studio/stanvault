@@ -21,6 +21,9 @@ export async function GET(
       },
       include: {
         platformLinks: true,
+        contactPoints: {
+          orderBy: [{ channel: 'asc' }, { isPrimary: 'desc' }, { updatedAt: 'desc' }],
+        },
       },
     })
 

@@ -3,8 +3,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { calculateStanScore } from '@/lib/scoring/stan-score'
-import { Platform, EventType, FanTier } from '@prisma/client'
+import { ContactConsentStatus, Platform, EventType, FanTier } from '@prisma/client'
 import { recordFanEvent } from '@/lib/events'
+import { upsertFanSmsContact } from '@/lib/fan-contact-points'
 
 const ECOSYSTEM_API_SECRET = process.env.ECOSYSTEM_API_SECRET || ''
 
@@ -51,6 +52,10 @@ const SOURCE_TO_PLATFORM: Record<ValidSource, Platform> = {
   kofi: Platform.KOFI,
   patreon: Platform.PATREON,
   merch: Platform.MERCH,
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error'
 }
 
 // Validate ecosystem secret
@@ -278,6 +283,15 @@ export async function POST(request: NextRequest) {
           },
         })
 
+        if (body.fanPhone) {
+          await upsertFanSmsContact(prisma, {
+            fanId: updatedFan.id,
+            phoneNumber: body.fanPhone,
+            consentStatus: ContactConsentStatus.PENDING,
+            consentSource: 'dasham_tip_import',
+          })
+        }
+
         // Track tier changes
         if (oldTier !== scoreResult.tier) {
           const tierOrder: FanTier[] = ['CASUAL', 'ENGAGED', 'DEDICATED', 'SUPERFAN']
@@ -398,6 +412,15 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      if (body.fanPhone) {
+        await upsertFanSmsContact(prisma, {
+          fanId: newFan.id,
+          phoneNumber: body.fanPhone,
+          consentStatus: ContactConsentStatus.PENDING,
+          consentSource: 'dasham_tip_import',
+        })
+      }
+
       await recordFanEvent({
         fanId: newFan.id,
         eventType: EventType.FIRST_TIP,
@@ -470,10 +493,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ imported: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Ecosystem] Fan import error:', error)
     return NextResponse.json(
-      { error: 'Internal error', message: error.message },
+      { error: 'Internal error', message: getErrorMessage(error) },
       { status: 500 }
     )
   }
@@ -721,10 +744,10 @@ async function handlePurchaseImport(request: NextRequest, source: ValidSource) {
     }
 
     return NextResponse.json({ imported: true, source })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[Ecosystem] ${source} import error:`, error)
     return NextResponse.json(
-      { error: 'Internal error', message: error.message },
+      { error: 'Internal error', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

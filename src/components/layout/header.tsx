@@ -1,21 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { Avatar } from '@/components/ui'
 import { Bell, Search } from 'lucide-react'
+import { useProfileImage } from '@/hooks/use-profile-image'
 
 export function Header() {
   const { data: session } = useSession()
-  const [profileImage, setProfileImage] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!session?.user?.id) return
-    fetch('/api/settings/profile/image', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => setProfileImage(data.image))
-      .catch(() => {})
-  }, [session?.user?.id])
+  const { profileImage } = useProfileImage()
 
   return (
     <header className="h-16 bg-black border-b border-[#1a1a1a] flex items-center px-6">
